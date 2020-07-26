@@ -6,21 +6,26 @@ class TennisEnvWrapper(gym.Wrapper):
   """
   :param env: (gym.Env) Gym environment that will be wrapped
   """
-  def __init__(self, path=None, train_mode=True, verbose=True):
+  def __init__(self, path=None, train_mode=True, verbose=True, max_steps=None):
     if path is None:
-        env = UnityEnvironment(file_name="Tennis_Linux_NoVis/Tennis.x86_64")
+        self.env = UnityEnvironment(file_name="Tennis_Linux_NoVis/Tennis.x86_64")
     else:
-        env = UnityEnvironment(file_name=path)
+        self.env = UnityEnvironment(file_name=path)
     
     # Call the parent constructor, so we can access self.env later
-    super(CustomWrapper, self).__init__(env)
+    super(TennisEnvWrapper, self).__init__(self.env)
+    
+    self.train_mode = train_mode
+    self.max_steps = max_steps
+    # Counter of steps per episode
+    self.current_step = 0
     
     # get the default brain
-    self.brain_name = env.brain_names[0]
-    self.brain = env.brains[brain_name]
+    self.brain_name = self.env.brain_names[0]
+    self.brain = self.env.brains[brain_name]
 
     # reset the environment
-    self.env_info = env.reset(train_mode=train_mode)[self.brain_name]
+    self.env_info = env.reset(train_mode=self.train_mode)[self.brain_name]
     
     # number of agents 
     self.num_agents = len(self.env_info.agents)
@@ -28,7 +33,7 @@ class TennisEnvWrapper(gym.Wrapper):
         print('Number of agents:', self.num_agents)
 
     # size of each action
-    self.action_size = brain.vector_action_space_size
+    self.action_size = self.brain.vector_action_space_size
     if verbose:
         print('Size of each action:', self.action_size)
 
@@ -44,7 +49,11 @@ class TennisEnvWrapper(gym.Wrapper):
     """
     Reset the environment 
     """
-    obs = self.env.reset()
+    self.env_info = env.reset(train_mode=self.train_mode)[self.brain_name]
+    obs = self.env_info.vector_observations
+    
+    self.current_step = 0
+    
     return obs
 
   def step(self, action):
@@ -52,30 +61,24 @@ class TennisEnvWrapper(gym.Wrapper):
     :param action: ([float] or int) Action taken by the agent
     :return: (np.ndarray, float, bool, dict) observation, reward, is the episode over?, additional informations
     """
-    obs, reward, done, info = self.env.step(action)
+    self.env_info = self.env.step(action)[self.brain_name]           # send all actions to tne environment
+    next_state = self.env_info.vector_observations         # get next state (for each agent)
+    reward = self.env_info.rewards                         # get reward (for each agent)
+    done = self.env_info.local_done                        # see if episode finished
+    
+    obs = next_state
+    info = dict()
+    
+    self.current_step += 1
+    # Overwrite the done signal when 
+    if self.current_step >= self.max_steps:
+      done = True
+      # Update the info dict to signal that the limit was exceeded
+      info['time_limit_reached'] = True
+    
     return obs, reward, done, info
 
 
-
-
-
-
-for i in range(1, 6):                                      # play game for 5 episodes
-    env_info = env.reset(train_mode=False)[brain_name]     # reset the environment    
-    states = env_info.vector_observations                  # get the current state (for each agent)
-    scores = np.zeros(num_agents)                          # initialize the score (for each agent)
-    while True:
-        actions = np.random.randn(num_agents, action_size) # select an action (for each agent)
-        actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
-        env_info = env.step(actions)[brain_name]           # send all actions to tne environment
-        next_states = env_info.vector_observations         # get next state (for each agent)
-        rewards = env_info.rewards                         # get reward (for each agent)
-        dones = env_info.local_done                        # see if episode finished
-        scores += env_info.rewards                         # update the score (for each agent)
-        states = next_states                               # roll over states to next time step
-        if np.any(dones):                                  # exit loop if episode finished
-            break
-    print('Score (max over agents) from episode {}: {}'.format(i, np.max(scores)))
-    
-env.close()
+    def close(self):
+        self.env.close()
 
