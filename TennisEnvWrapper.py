@@ -2,22 +2,43 @@ from unityagents import UnityEnvironment
 import numpy as np
 import gym
 
-env = UnityEnvironment(file_name="Tennis_Linux_NoVis/Tennis.x86_64")
-
-# get the default brain
-brain_name = env.brain_names[0]
-brain = env.brains[brain_name]
-
-# reset the environment
-env_info = env.reset(train_mode=True)[brain_name]
-
 class TennisEnvWrapper(gym.Wrapper):
   """
   :param env: (gym.Env) Gym environment that will be wrapped
   """
-  def __init__(self, env):
+  def __init__(self, path=None, train_mode=True, verbose=True):
+    if path is None:
+        env = UnityEnvironment(file_name="Tennis_Linux_NoVis/Tennis.x86_64")
+    else:
+        env = UnityEnvironment(file_name=path)
+    
     # Call the parent constructor, so we can access self.env later
     super(CustomWrapper, self).__init__(env)
+    
+    # get the default brain
+    self.brain_name = env.brain_names[0]
+    self.brain = env.brains[brain_name]
+
+    # reset the environment
+    self.env_info = env.reset(train_mode=train_mode)[self.brain_name]
+    
+    # number of agents 
+    self.num_agents = len(self.env_info.agents)
+    if verbose:
+        print('Number of agents:', self.num_agents)
+
+    # size of each action
+    self.action_size = brain.vector_action_space_size
+    if verbose:
+        print('Size of each action:', self.action_size)
+
+    # examine the state space 
+    states = self.env_info.vector_observations
+    self.state_size = states.shape[1]
+    
+    if verbose:
+        print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], self.state_size))
+        print('The state for the first agent looks like:', states[0])
   
   def reset(self):
     """
@@ -37,19 +58,7 @@ class TennisEnvWrapper(gym.Wrapper):
 
 
 
-# number of agents 
-num_agents = len(env_info.agents)
-print('Number of agents:', num_agents)
 
-# size of each action
-action_size = brain.vector_action_space_size
-print('Size of each action:', action_size)
-
-# examine the state space 
-states = env_info.vector_observations
-state_size = states.shape[1]
-print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
-print('The state for the first agent looks like:', states[0])
 
 for i in range(1, 6):                                      # play game for 5 episodes
     env_info = env.reset(train_mode=False)[brain_name]     # reset the environment    
