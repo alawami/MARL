@@ -18,8 +18,8 @@ class MADDPG:
 
         # critic input = obs_full + actions = 24+2+2=28
         ddpg = DDPGAgent(48, 16, 8, 2, 28, 32, 16)
-        self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 28, 32, 16), 
-                             DDPGAgent(24, 16, 8, 2, 28, 32, 16)]
+        self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 28, 36, 16), 
+                             DDPGAgent(24, 16, 8, 2, 28, 36, 16)]
         
         self.discount_factor = discount_factor
         self.tau = tau
@@ -53,6 +53,8 @@ class MADDPG:
         # need to transpose each element of the samples
         # to flip obs[parallel_agent][agent_number] to
         # obs[agent_number][parallel_agent]
+        print('smaples shape: ' + str(samples.shape))
+        
         obs, action, reward, next_obs, done = map(transpose_to_tensor, samples)
 
         obs = torch.stack(obs)
