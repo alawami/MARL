@@ -16,10 +16,10 @@ class MADDPG:
     def __init__(self, discount_factor=0.95, tau=0.02):
         super(MADDPG, self).__init__()
 
-        # critic input = obs_full + actions = 24+2+2=28
+        # critic input = obs_full + actions = 24+24+2+2=52
         ddpg = DDPGAgent(48, 16, 8, 2, 28, 32, 16)
-        self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 28, 36, 16), 
-                             DDPGAgent(24, 16, 8, 2, 28, 36, 16)]
+        self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 52, 36, 16), 
+                             DDPGAgent(24, 16, 8, 2, 52, 36, 16)]
         
         self.discount_factor = discount_factor
         self.tau = tau
@@ -53,12 +53,12 @@ class MADDPG:
         # need to transpose each element of the samples
         # to flip obs[parallel_agent][agent_number] to
         # obs[agent_number][parallel_agent]
-        print('smaples shape: ' + str(samples.shape))
+#         print('smaples shape: ' + str(samples.shape))
         
-        obs, action, reward, next_obs, done = map(transpose_to_tensor, samples)
+        obs, obs_full, action, reward, next_obs, next_obs_full, done = map(transpose_to_tensor, samples)
 
-        obs = torch.stack(obs)
-        next_obs = torch.stack(next_obs)
+        obs_full = torch.stack(obs_full)
+        next_obs_full = torch.stack(next_obs_full)
         
         agent = self.maddpg_agent[agent_number]
         agent.critic_optimizer.zero_grad()
@@ -68,20 +68,25 @@ class MADDPG:
         target_actions = self.target_act(next_obs)
         target_actions = torch.cat(target_actions, dim=1)
         
-        print(next_obs.shape)
-        print(target_actions.shape)
+#         print(next_obs.shape)
+#         print(target_actions.shape)
         
-        print(torch.cat((next_obs,target_actions)), dim=1)
-        print(torch.cat((next_obs.t(),target_actions)), dim=1)
+#         print(torch.cat((next_obs,target_actions)), dim=1)
+
+#         print(next_obs_full.t())
+#         print(next_obs_full.t().shape)
+#         print(target_actions)
+#         print(target_actions.shape)
+#         print(torch.cat((torch.squeeze(next_obs_full.t()),target_actions), dim=1))
         
-        target_critic_input = torch.cat((next_obs.t(),target_actions), dim=1).to(device)
+        target_critic_input = torch.cat((torch.squeeze(next_obs_full.t()),target_actions), dim=1).to(device)
         
         with torch.no_grad():
             q_next = agent.target_critic(target_critic_input)
         
         y = reward[agent_number].view(-1, 1) + self.discount_factor * q_next * (1 - done[agent_number].view(-1, 1))
         action = torch.cat(action, dim=1)
-        critic_input = torch.cat((obs_full.t(), action), dim=1).to(device)
+        critic_input = torch.cat((torch.squeeze(obs_full.t()), action), dim=1).to(device)
         q = agent.critic(critic_input)
 
         huber_loss = torch.nn.SmoothL1Loss()
@@ -90,7 +95,7 @@ class MADDPG:
         #torch.nn.utils.clip_grad_norm_(agent.critic.parameters(), 0.5)
         agent.critic_optimizer.step()
 
-        #update actor network using policy gradient
+        # update actor network using policy gradient
         agent.actor_optimizer.zero_grad()
         # make input to agent
         # detach the other agents to save computation
@@ -102,7 +107,7 @@ class MADDPG:
         q_input = torch.cat(q_input, dim=1)
         # combine all the actions and observations for input to critic
         # many of the obs are redundant, and obs[1] contains all useful information already
-        q_input2 = torch.cat((obs_full.t(), q_input), dim=1)
+        q_input2 = torch.cat((torch.squeeze(obs_full.t()), q_input), dim=1)
         
         # get the policy gradient
         actor_loss = -agent.critic(q_input2).mean()
