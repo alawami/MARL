@@ -11,6 +11,7 @@ class ReplayBuffer:
     def push(self,transition):
         """push into the buffer"""
         
+        # To Do: Generalize to parallel environment
         self.deque.append(transition)
 #         input_to_buffer = transpose_list(transition)
         
