@@ -62,7 +62,7 @@ class TennisEnv():
     
     self.current_step = 0
     
-    return obs
+    return obs, obs.reshape(1,48)
 
   def step(self, action):
     """
@@ -84,7 +84,9 @@ class TennisEnv():
       # Update the info dict to signal that the limit was exceeded
       info['time_limit_reached'] = True
     
-    return obs, reward, done, info
+    # To Do: Does this generalizes to parallel environments
+    
+    return obs, obs.reshape(1,48), reward, done, info
 
 
     def close(self):
