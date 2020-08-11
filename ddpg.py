@@ -23,7 +23,7 @@ class DDPGAgent:
         self.target_actor = Network(in_actor, hidden_in_actor, hidden_out_actor, out_actor, actor=True).to(device)
         self.target_critic = Network(in_critic, hidden_in_critic, hidden_out_critic, 1).to(device)
 
-        self.noise = OUNoise(out_actor, scale=1.0 )
+        self.noise = OUNoise(out_actor, scale=1.0)
 
         
         # initialize targets same as original networks
@@ -35,8 +35,13 @@ class DDPGAgent:
 
 
     def act(self, obs, noise=0.0):
-        obs = obs.to(device)
-        action = self.actor(obs) + noise*self.noise.noise()
+        obs = obs.to(device).unsqueeze(0) # Add dimension for minibatch for single process
+             
+        self.actor.eval()
+        with torch.no_grad():
+            action = self.actor(obs) + noise*self.noise.noise()
+        self.actor.train()
+        
         return action
 
     def target_act(self, obs, noise=0.0):
