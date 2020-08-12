@@ -6,20 +6,21 @@ from ddpg import DDPGAgent
 import torch
 from utilities import soft_update, transpose_to_tensor, transpose_list
 from utilities import to_tensor
+from utilities import print_variable
 
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = 'cpu'
-
-
 
 class MADDPG:
     def __init__(self, discount_factor=0.95, tau=0.02):
         super(MADDPG, self).__init__()
 
         # critic input = obs_full + actions = 24+24+2+2=52
-        ddpg = DDPGAgent(48, 16, 8, 2, 28, 32, 16)
-        self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 52, 36, 16), 
-                             DDPGAgent(24, 16, 8, 2, 52, 36, 16)]
+#         ddpg = DDPGAgent(48, 16, 8, 2, 28, 32, 16)
+        self.maddpg_agent = [DDPGAgent(24, 400, 300, 2, 52, 400, 300, lr_actor=1e-4, lr_critic=1e-3), 
+                             DDPGAgent(24, 400, 300, 2, 52, 400, 300, lr_actor=1e-4, lr_critic=1e-3)]
+#         self.maddpg_agent = [DDPGAgent(24, 16, 8, 2, 52, 36, 16), 
+#                              DDPGAgent(24, 16, 8, 2, 52, 36, 16)]
         
         self.discount_factor = discount_factor
         self.tau = tau
@@ -38,7 +39,8 @@ class MADDPG:
     def act(self, obs_all_agents, noise=0.0):
         """get actions from all agents in the MADDPG object"""
         actions = [agent.act(obs, noise) for agent, obs in zip(self.maddpg_agent, obs_all_agents)]
-        actions = [torch.clamp(action, -1, 1) for action in actions] 
+        actions = [torch.clamp(action, -1, 1) for action in actions]
+        
         return actions
 
     def target_act(self, obs_all_agents, noise=0.0):
@@ -53,12 +55,19 @@ class MADDPG:
         # need to transpose each element of the samples
         # to flip obs[parallel_agent][agent_number] to
         # obs[agent_number][parallel_agent]
-#         print('smaples shape: ' + str(samples.shape))
         
         obs, obs_full, action, reward, next_obs, next_obs_full, done = map(transpose_to_tensor, samples)
+        
+#         ### DEBUGGING
+#         print('#### start update function')
+#         print_variable(obs_full[0], 'obs_full[0]')
 
         obs_full = torch.stack(obs_full)
         next_obs_full = torch.stack(next_obs_full)
+        
+#         print('#### stacking obs_full and next_obs_full')
+#         print_variable(obs_full, 'stacked obs_full')
+#         print_variable(next_obs, 'next_obs')
         
         agent = self.maddpg_agent[agent_number]
         agent.critic_optimizer.zero_grad()
@@ -66,8 +75,17 @@ class MADDPG:
         #critic loss = batch mean of (y- Q(s,a) from target network)^2
         #y = reward of this timestep + discount * Q(st+1,at+1) from target network
         target_actions = self.target_act(next_obs)
+        
+#         print('#### Target action')
+#         print_variable(target_actions, 'target_actions')
+        
         target_actions = torch.cat(target_actions, dim=1)
         
+#         print('#### Cat target action')
+#         print_variable(target_actions, 'cat: target_actions')
+
+#         print('#### next_obs_full.t()')
+#         print_variable(next_obs_full.t(), 'next_obs_full.t()')
 #         print(next_obs.shape)
 #         print(target_actions.shape)
         
@@ -81,11 +99,26 @@ class MADDPG:
         
         target_critic_input = torch.cat((torch.squeeze(next_obs_full.t()),target_actions), dim=1).to(device)
         
+#         print('#### COMPLETED target_critic_input')
+        
         with torch.no_grad():
             q_next = agent.target_critic(target_critic_input)
         
+#         print('#### action')
+#         print_variable(action, 'action')
+        
         y = reward[agent_number].view(-1, 1) + self.discount_factor * q_next * (1 - done[agent_number].view(-1, 1))
         action = torch.cat(action, dim=1)
+        
+#         print('#### cat action:')
+#         print_variable(action, 'action')
+#         print_variable(obs_full, 'obs_full')
+#         print_variable(obs_full.t(), 'obs_full.t')
+        
+#         print('### critic_input')
+#         print_variable(torch.cat((torch.squeeze(obs_full.t()), action), dim=1), 'torch.cat((torch.squeeze(obs_full.t()), action), dim=1)')
+
+        
         critic_input = torch.cat((torch.squeeze(obs_full.t()), action), dim=1).to(device)
         q = agent.critic(critic_input)
 
