@@ -3,6 +3,7 @@
 
 from networkforall import Network
 from utilities import hard_update, gumbel_softmax, onehot_from_logits
+from utilities import print_variable
 from torch.optim import Adam
 import torch
 import numpy as np
@@ -36,15 +37,28 @@ class DDPGAgent:
 
     def act(self, obs, noise=0.0):
         obs = obs.to(device).unsqueeze(0) # Add dimension for minibatch for single process
-             
+        
+#         print('obs shape:')
+#         print(obs.shape)
+        
         self.actor.eval()
         with torch.no_grad():
             action = self.actor(obs) + noise*self.noise.noise()
         self.actor.train()
         
+#         print('action:')
+#         print(action.shape)
+#         print(type(action))
+#         print(action)
+        
         return action
 
     def target_act(self, obs, noise=0.0):
         obs = obs.to(device)
-        action = self.target_actor(obs) + noise*self.noise.noise()
+        
+        self.actor.eval()
+        with torch.no_grad():
+          action = self.target_actor(obs) + noise*self.noise.noise()
+        self.actor.train()
+        
         return action
