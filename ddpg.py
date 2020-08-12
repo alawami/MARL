@@ -56,6 +56,7 @@ class DDPGAgent:
     def target_act(self, obs, noise=0.0):
         obs = obs.to(device)
         
+        # No need to change mode to eval for target network
         self.actor.eval()
         with torch.no_grad():
           action = self.target_actor(obs) + noise*self.noise.noise()
