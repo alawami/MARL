@@ -15,7 +15,7 @@ class TennisEnvWrapper(gym.Wrapper):
   """
   def __init__(self, path=None, train_mode=True, verbose=True, max_steps=None, seed=0):
     if path is None:
-      self.env = UnityEnvironment(file_name="Tennis_Linux_NoVis/Tennis.x86_64", seed=seed)
+      self.env = UnityEnvironment(file_name="../Tennis_Linux_NoVis/Tennis.x86_64", seed=seed)
     else:
       self.env = UnityEnvironment(file_name=path, seed=seed)
     
