@@ -47,6 +47,8 @@ The environment is considered solved, when the average (over 100 episodes) of th
 
 7. Start Jupyter Lab by running the command `./start_jupyter`.
 
+8. Run the code in the `4. Training` section.
+
 ### Instructions
 
 Follow the instructions in `Tennis.ipynb` insider `DDPG` folder to get started with training your agent!
