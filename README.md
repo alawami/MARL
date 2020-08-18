@@ -47,7 +47,9 @@ The environment is considered solved, when the average (over 100 episodes) of th
 
 7. Start Jupyter Lab by running the command `./start_jupyter`.
 
-8. Run the code in the `4. Training` section, under `DDPG` folder.
+8. Open `DDPG_Tennis.ipynb` notebook under `DDPG` folder.
+
+9. Run the code in the `4. Training` section.
 
 ### Instructions
 
