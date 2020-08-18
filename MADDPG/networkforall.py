@@ -9,7 +9,9 @@ def hidden_init(layer):
     return (-lim, lim)
 
 class Network(nn.Module):
+    """The network architecture for both Actor and Critic."""
     def __init__(self, input_dim, hidden_in_dim, hidden_out_dim, output_dim, actor=False):
+        """Initialize parameters and build model."""
         super(Network, self).__init__()
 
         """self.input_norm = nn.BatchNorm1d(input_dim)
@@ -55,11 +57,13 @@ class Network(nn.Module):
         
 
     def reset_parameters(self):
+        """initialize network parameters"""
         self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
         self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
         self.fc3.weight.data.uniform_(-1e-3, 1e-3)
 
     def forward(self, x):
+        """network forward pass"""
         if self.actor:
             # return a vector of the force
 #             x = self.bn0(x)

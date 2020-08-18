@@ -17,9 +17,9 @@ device = 'cpu'
 TAU = 0.02
 
 class MADDPG:
+    """Reinforcement agent implementing MADDPG."""
     def __init__(self, discount_factor=0.95, tau=0.02):
-        super(MADDPG, self).__init__()
-
+        """Initialize parameters and setup agent"""
         # critic input = obs_full + actions = 24+24+2+2=52
 #         ddpg = DDPGAgent(24, 400, 300, 2, 52, 400, 300, lr_actor=1e-4, lr_critic=1e-3)
         self.maddpg_agent = [DDPGAgent(24, 512, 256, 2, 52, 512, 256, lr_actor=1e-4, lr_critic=1e-3), 
@@ -263,6 +263,7 @@ class MADDPG:
             
             
     def reset(self):
+      """reset noise process for each DDPG agent"""
       for ddpg_agent in self.maddpg_agent:
         ddpg_agent.reset()
 

@@ -20,9 +20,8 @@ WEIGHT_DECAY = 0 # 1.e-5
 OU_SIGMA = 0.1
 
 class DDPGAgent:
+    """Reinforcement agent implementing DDPG to be used with MADDPG"""
     def __init__(self, in_actor, hidden_in_actor, hidden_out_actor, out_actor, in_critic, hidden_in_critic, hidden_out_critic, lr_actor=1.0e-2, lr_critic=1.0e-2):
-        super(DDPGAgent, self).__init__()
-
         self.actor = Network(in_actor, hidden_in_actor, hidden_out_actor, out_actor, actor=True).to(device)
         self.critic = Network(in_critic, hidden_in_critic, hidden_out_critic, 1).to(device)
         self.target_actor = Network(in_actor, hidden_in_actor, hidden_out_actor, out_actor, actor=True).to(device)
@@ -40,6 +39,7 @@ class DDPGAgent:
 
 
     def act(self, obs, noise=0.0):
+        """returns the actions a given state"""
       
         logging.debug('######### DDPG.PY - ACT ######### INPUT OBS')
         print_variable(obs, 'obs')
@@ -76,6 +76,7 @@ class DDPGAgent:
         return action
 
     def target_act(self, obs, noise=0.0):
+        """returns the actions for a given state for target networks"""
         obs = obs.to(device)
         
         # No need to change mode to eval for target network
@@ -87,4 +88,5 @@ class DDPGAgent:
         return action
       
     def reset(self):
+        """reset noise process"""
         self.noise.reset()

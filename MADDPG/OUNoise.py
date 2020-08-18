@@ -4,8 +4,10 @@ import torch
 
 # from https://github.com/songrotek/DDPG/blob/master/ou_noise.py
 class OUNoise:
+    """Implement OU Noise Process"""
 
     def __init__(self, action_dimension, scale=0.1, mu=0, theta=0.15, sigma=0.2):
+        """Initialize parameters and build model."""
         self.action_dimension = action_dimension
         self.scale = scale
         self.mu = mu
@@ -15,9 +17,11 @@ class OUNoise:
         self.reset()
 
     def reset(self):
+        """resets the noise process"""
         self.state = np.ones(self.action_dimension) * self.mu
 
     def noise(self):
+        """returns a noise process vector"""
         x = self.state
         dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
         self.state = x + dx

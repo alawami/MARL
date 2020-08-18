@@ -102,6 +102,7 @@ class Agent():
         return np.clip(action, -1, 1)
 
     def reset(self):
+        """reset noise process"""
         self.noise.reset()
 
     def learn(self, experiences, gamma):
@@ -188,8 +189,11 @@ class OUNoise:
 class OUNoiseWrapper:
     """Wrap noise process for multi"""
     def __init__(self, action_size, seed, num_agents=20, mu=0., mu_range=0., theta=0.15, theta_range=0.05, sigma=0.2, sigma_range=0.1):
+        """Initialize parameters for noise process"""
         self.num_agents = num_agents
         
+        # Creating different noise processes with different parameter for each noise process
+        # If you just want to use different and independent noise processes, set mu_range = theta_range = sigma_range = 0
         self.noise_processes = [OUNoise(action_size, seed, mu=random.uniform(mu-mu_range, mu+mu_range), theta=random.uniform(theta-theta_range, theta+theta_range), sigma=random.uniform(sigma-sigma_range, sigma+sigma_range)) for i in range(num_agents)]
 
     def reset(self):

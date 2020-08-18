@@ -4,7 +4,13 @@ from utilities import transpose_list
 
 
 class ReplayBuffer:
+    """Implements Replay Buffer"""
     def __init__(self,size):
+        """Initialize parameters and build replay buffer.
+        Params
+        ======
+            size (int): Size of the replay buffer
+        """
         self.size = size
         self.deque = deque(maxlen=self.size)
 
@@ -26,6 +32,7 @@ class ReplayBuffer:
         return transpose_list(samples)
 
     def __len__(self):
+        """returns length of the buffer"""
         return len(self.deque)
 
 

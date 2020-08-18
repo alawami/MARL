@@ -8,13 +8,16 @@ import numpy as np
 import logging
 
 def transpose_list(mylist):
+    """Tranpose list from env x agent to agent x env"""
     return list(map(list, zip(*mylist)))
 
 def transpose_to_tensor(input_list):
+    """Transpose a list from env x agent to agent x env and change from a list of lists to a list of tensors"""
     make_tensor = lambda x: torch.tensor(x, dtype=torch.float)
     return list(map(make_tensor, zip(*input_list)))
 
 def to_tensor(input_list):
+    """Change from a list of lists to a list of tensors"""
     make_tensor = lambda x: torch.tensor(x, dtype=torch.float)
     return list(map(make_tensor, input_list))
 
